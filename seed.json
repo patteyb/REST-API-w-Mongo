@@ -1,0 +1,5 @@
+{
+	"undefined": "localhost/data",
+	"dev": "localhost/data",
+	"prod": "localhost/data"
+}
