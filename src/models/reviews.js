@@ -15,11 +15,18 @@ var ReviewSchema = new Schema({
     },
     rating: {
         type: Number,
-        required: [true, 'Please enter a number between 1 and 5.']
+        required: [true, 'Please enter a number between 1 and 5.'],
+        min: [1, 'Rating must be a number between 1 and 5.'],
+        max: [5, 'Rating must be a number between 1 and 5.']
     },
     review: {
         type: String
     }
+});
+
+ReviewSchema.pre('save', function(next) {
+    this.rating = Math.round(this.rating);
+    next();
 });
 
 var Review = mongoose.model('Review', ReviewSchema);

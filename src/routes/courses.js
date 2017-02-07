@@ -7,17 +7,21 @@ var User = require('../models/users');
 var Review = require('../models/reviews');
 
 router.param('courseId', function(req, res, next, id) {
-    Course.findById(id).populate('reviews').exec(function(err, course) {
-        if(err) return next(err);
-        if(!course) {
-            err = new Error('Course not found.');
-            err.status = 404;
-            return next(err);
-        }
-        req.course = (course);
-        //console.log('req.course.overallRating: ', req.course.overallRating);
-        return next();
-    });
+    Course.findById(id)
+        .populate('reviews')
+        .populate('user')
+        .exec(function(err, course) {
+            if(err) return next(err);
+            if(!course) {
+                err = new Error('Course not found.');
+                err.status = 404;
+                return next(err);
+            }
+            req.course = (course);
+            //req.course.overallRating = course.avgRating;
+            //console.log('req.course.overallRating: ', req.course.overallRating);
+            return next();
+        });
 });
 
 /** GET /api/courses
@@ -36,9 +40,10 @@ router.get('/courses', function(req, res, next) {
 router.get('/courses/:courseId', function(req, res, next) {
     // format data for angular
     var theCourse = {};
-    //console.log(req.course.overallRating);
+    console.log(req.course.overallRating + ', ' + req.course.estimatedTime);
     theCourse.data = [];
     theCourse.data.push(req.course);
+    console.log(theCourse.data[0]);
     res.json(theCourse);
 });
 
