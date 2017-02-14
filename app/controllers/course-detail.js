@@ -29,6 +29,7 @@ function CourseDetailController(dataService, errorHandlerService, sessionService
       });
   };
 
+
   _this.canPostReview = function() {
     // only allow the user to post a review if...
     // 1) we have an authenticated user

@@ -1,26 +1,34 @@
 var bcrypt = require('bcryptjs');
 var User = require('../models/users');
+var auth = require('basic-auth');
 
 function authenticate(req, res, next) {
-    //console.log('IN AUTHENTICATION, ', req.body);
-    User.findOne({ emailAddress: req.body.emailAddress }, function(err, user) {
-        if(err) {
-            var err = new Error('This email is not valid');
-            err.status = 401;
-            return next(err);
+    console.log('IN AUTHENTICATION');
+
+    // Parse the authorization header. If header is invalide,
+    // undefined is returned, else object with name and pass properties 
+    // is returned
+    var userLogin = auth(req);
+
+    User.findOne({ emailAddress: userLogin.name }, function(err, userRecord) {
+
+        if(err) return next(err);
+    
+        if (userRecord) {
+            bcrypt.compare(userLogin.pass, userRecord.password, function(err, isMatch) {
+                if (err || !isMatch) {
+                    // Password invalid
+                    return next(401);
+                }
+                // Passwords match and user is authenticated
+                req.user = userRecord;
+                return next();     
+            });
+        } else {
+            // Email invalid
+            return next(401);
         }
-        req.user = user;
-        //console.log('IN AUTHENTICATION, ', req.user.password, ', ', req.body.password);
-        bcrypt.compare(req.body.password, req.user.password, function(err, isMatch) {
-            //console.log('IN AUTHENTICATION, ismatch= ', isMatch);
-            if (err || !isMatch) {
-                var err = new Error('Invalid password.');
-                err.status = 401;
-                return next(err);
-            }
-            return next();     
-        });
-    });
+    }); 
 }
 
 module.exports.authenticate = authenticate;

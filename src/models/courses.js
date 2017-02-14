@@ -5,18 +5,6 @@ var Review = require('../models/reviews');
 
 var Schema = mongoose.Schema;
 
-var StepsSchema = new Schema([{
-    stepNumber: Number,
-    title: {
-        type: String,
-        required: [true, 'A title is required.']
-    },
-    description: {
-        type: String,
-        required: [true, 'A description is required.']
-    }
-}]);
-
 var CourseSchema = new Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -31,16 +19,19 @@ var CourseSchema = new Schema({
         type: String,
         required: [true, 'Description is required.']
     },
-    estimatedTime: {
-        type: String
-    },
-    materialsNeeded: {
-        type: String
-    },
-    steps: {
-        type: StepsSchema,
-        required: [true, 'You must have at least one step.']
-    },
+    estimatedTime: String,
+    materialsNeeded: String,
+    steps: [{
+        stepNumber: Number,
+        title: {
+            type: String,
+            required: [true, 'A title is required.']
+        },
+        description: {
+            type: String,
+            required: [true, 'A description is required.']
+        }
+    }],
     reviews: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Review'
@@ -61,6 +52,23 @@ CourseSchema.virtual('overallRating').get(function() {
     }
     return overallRating;
 });
+
+CourseSchema.pre('init', function(next, data) {
+    Course.populate(data, {
+        path: 'reviews user' 
+    }, function(err, course) {
+        data = course;
+        next();
+    });
+});
+
+CourseSchema.path('steps').validate(function(steps) {
+    if (!steps || steps.length === 0) {
+        return false;
+    } else {
+        return true;
+}}, 'Courses need to have at least one step.');
+
 
 var Course = mongoose.model('Course', CourseSchema);
 module.exports = Course;

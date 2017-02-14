@@ -5,22 +5,19 @@
       "_id": "57029ed4795118be119cc437",
       "fullName": "Joe Smith",
       "emailAddress": "joe@smith.com",
-      "passwordHash": "$2a$10$Rh/mreSVnNTrCzTiU5AmW.JRLMqeGVCiMLJI9CH6mHHW0OuxexNae",
-      "salt": "$2a$10$Rh/mreSVnNTrCzTiU5AmW."
+      "password": "password"
     },
     "samjones": {
       "_id": "57029ed4795118be119cc438",
       "fullName": "Sam Jones",
       "emailAddress": "sam@jones.com",
-      "passwordHash": "$2a$10$eRu8meyFmJO16rGWqjN7D.RQHCGLpDPD6/soQduVhYc6QXskj6p7m",
-      "salt": "$2a$10$eRu8meyFmJO16rGWqjN7D."
+      "password": "password"
     },
     "samsmith": {
       "_id": "57029ed4795118be119cc439",
       "fullName": "Sam Smith",
       "emailAddress": "sam@smith.com",
-       "passwordHash": "$2a$10$g5E6B8ZeYs3B8DHe4HrfNOGo7EKngYuiVsVjXiV.7H4ZMccI/WnFe",
-      "salt": "$2a$10$g5E6B8ZeYs3B8DHe4HrfNO"
+      "password": "password"
     }
   },
   "reviews": {

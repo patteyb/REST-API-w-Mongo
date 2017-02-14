@@ -12,7 +12,7 @@ function SignInController(authService, errorHandlerService, $location, $log) {
   _this.signIn = function() {
     authService.signIn(_this.emailAddress, _this.password).then(
       function() {
-        $location.path('/signin');
+        $location.path('/');
       },
       function(response) {
         errorHandlerService.handleError(response, displayValidationErrors);

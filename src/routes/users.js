@@ -5,45 +5,23 @@ var router = express.Router();
 var User = require('../models/users');
 var mid = require('../middleware');
 
-// GET /signin
-router.get('/signin', function(req, res, next) {
-  return res.render('sign-in');
+
+// GET /api/users 200
+// Returns the currently authenticated user
+router.get('/users', mid.authenticate, function (req, res, next) {
+    var validUser = {};
+    validUser.data = [];
+    validUser.data.push(req.user);
+    res.json(validUser); 
 });
 
-// POST /login
-router.post('/signin', mid.authenticate, function(req, res, next) {
 
-  if (req.body.emailAddress && req.body.password) {
-      console.log('IN POST SIGNIN ROUTER: ', req.body);
-      console.log('Retrieved user: ', req.user);
-      if (!req.user) {
-        var err = new Error('Wrong email or password');
-        err.status = 401;
-        return next(err)
-      } else {
-        //req.session.userId = user._id;   // Express creates a session!
-        return res.redirect(200, '/courses');
-      }
-  } else {
-    var err = new Error('Email and password are required'); 
-  }
-});
 
-/** GET /api/users 200 */
-/*router.get('/users', function(req, res, next) {
-    console.log('IN USERS ROUTER: ', req.body);
-    User.find({}, function(err, users) {
-        if(err) return next(err);
-        var theUsers = {};
-        theUsers.data = users;
-        //console.log('USERS: ', theUsers);
-        res.json(theUsers);
-    });
-}); */
-
-/** POST /api/users
+/** POST /api/users 201
  * Creates a user        */
 router.post('/users', function(req, res, next) {
+
+    // If all fields are present
     if (req.body.emailAddress &&
         req.body.fullName &&
         req.body.password && 
@@ -51,24 +29,63 @@ router.post('/users', function(req, res, next) {
 
         // confirm that two password fields match
         if (req.body.password !== req.body.confirmPassword) {
-            var err = new Error('Passwords do not match.');
-            err.status = 400;
-            return next(err);
+            var errorMessages = {
+                message: 'Unmatched passwords',
+                errors: [{ 
+                    code: 400,
+                    message: 'Password and Confirm Password do not match.'
+                }]
+            };
+            return res.status(400).json(errorMessages);
         }
 
+        // All fields present and password fields match, go ahead and save
         var user = new User(req.body);
-        user.save(function(err, user) {
-            if(err) return next(err);
-            //res.location('/');
-            //res.send(201, null);
+        user.save(function(buggered, user) {
+            // Check for error
+            if (buggered) {
+                var errorMessages = {
+                    message: 'Validation Failed',
+                    errors: {}
+                };
+                // Check for validation error 
+                if (buggered.name === 'ValidationError') {
+                    for (var error in buggered.errors) {
+                        errorMessages.errors[error] = [{
+                            code: 400,
+                            message: buggered.errors[error].message
+                        }];
+                    }
+                    return res.status(400).json(errorMessages);
+                // Pass on error to error handler
+                } else {
+                    return next(buggered);
+                }
+            }
+            // Save new user with no errors
             res.status(201);
             res.json(user);
         });
+    // Else Fields are missing
     } else {
-        var err = new Error('All fields required');
-        err.status = 400;  // bad request
-        return next(err);
+        var errorMessages = {
+            message: 'No Data',
+            errors: [{ 
+                code: 400,
+                message: 'All fields are required.'
+            }]
+        };
+        return res.status(400).json(errorMessages);
       }
+});
+
+// Unsupported http routes
+router.put('/users', function (req, res, next) {
+    return res.status(403).json('Cannot edit a collection of users.');
+});
+
+router.delete('/users', function (req, res, next) {
+    return res.status(403).json('Cannot delete a collection of users.');
 });
 
 module.exports = router;
