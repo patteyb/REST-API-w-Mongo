@@ -1,34 +1,50 @@
+/** 
+ * INDEX.JS
+ *
+ * @author:  Pattey Bleecker
+ * Date:    February 15, 2017
+ * For:     teamTreehouse Project 11, Build a RESTful API
+ * 
+ * Middleware function authenticate() parses the authorization header to
+ * capture user name and password, and then authenticates the user in the system.
+ * If user exists, return the user record; else return error.
+ */
 var bcrypt = require('bcryptjs');
 var User = require('../models/users');
 var auth = require('basic-auth');
 
 function authenticate(req, res, next) {
-    console.log('IN AUTHENTICATION');
 
-    // Parse the authorization header. If header is invalide,
-    // undefined is returned, else object with name and pass properties 
-    // is returned
+    // If header is invalid, userLogin = undefined
+    // Else userLogin = object with name and password properties 
     var userLogin = auth(req);
 
-    User.findOne({ emailAddress: userLogin.name }, function(err, userRecord) {
+    if (userLogin !== undefined) {
+        User.findOne({ emailAddress: userLogin.name }, function(err, userRecord) {
 
-        if(err) return next(err);
-    
-        if (userRecord) {
-            bcrypt.compare(userLogin.pass, userRecord.password, function(err, isMatch) {
-                if (err || !isMatch) {
-                    // Password invalid
-                    return next(401);
-                }
-                // Passwords match and user is authenticated
-                req.user = userRecord;
-                return next();     
-            });
-        } else {
-            // Email invalid
-            return next(401);
-        }
-    }); 
+            if(err) return next(err);
+            
+            // If user exists
+            if (userRecord) {
+                // Check to see that the password is a match
+                bcrypt.compare(userLogin.pass, userRecord.password, function(err, isMatch) {
+                    if (err || !isMatch) {
+                        // Password invalid
+                        return next(401);
+                    }
+                    // Passwords match and user is authenticated
+                    req.user = userRecord;
+                    return next();     
+                });
+            } else {
+                // Email invalid
+                return res.status(401).json('Unauthorized access.');
+            }
+        }); 
+    // Else, authentication header is empty
+    } else {
+        return res.status(401).json('Unauthorized access.');
+    }
 }
 
 module.exports.authenticate = authenticate;

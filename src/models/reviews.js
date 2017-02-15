@@ -1,13 +1,22 @@
+/** 
+ * REVIEWS.JS
+ *
+ * @author: Pattey Bleecker
+ * Date:    February 15, 2017
+ * For:     teamTreehouse Project 11, Build a RESTful API
+ * 
+ * Reviews model schema
+ */
 'use strict';
 
-var User = require('../models/users');
-var Course = require('../models/courses');
+const User = require('../models/users');
+const Course = require('../models/courses');
 
-var mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
-var Schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
-var ReviewSchema = new Schema({
+const ReviewSchema = new Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
@@ -27,22 +36,11 @@ var ReviewSchema = new Schema({
     }
 });
 
-/*
-ReviewSchema.pre('init', function(next, data) {
-    Review.populate(data, {
-        path: 'user' 
-    }, function(err, review) {
-        data = review;
-        next();
-    });
-});
-*/
+// Round the rating to the nearest integer before saving
 ReviewSchema.pre('save', function(next) {
     this.rating = Math.round(this.rating);
     next();
 });
-
-//ReviewSchema.index({ user: 1, course._id: 1 }, { unique: true });
 
 var Review = mongoose.model('Review', ReviewSchema);
 module.exports = Review;

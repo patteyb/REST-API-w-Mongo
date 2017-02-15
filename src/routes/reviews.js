@@ -1,9 +1,17 @@
+/** 
+ * Reviews.JS
+ *
+ * @author: Pattey Bleecker
+ * Date:    February 15, 2017
+ * For:     teamTreehouse Project 11, Build a RESTful API
+ * 
+ * Router for Reviews
+ */
 'use strict';
 
 var express = require('express');
 var router = express.Router();
 var Course = require('../models/courses');
-//var User = require('../models/users');
 var Review = require('../models/reviews');
 var mid = require('../middleware');
 
@@ -25,34 +33,28 @@ router.post('/courses/:courseId/reviews', mid.authenticate, function(req, res, n
     // Find the user who is posting review
     review.user = req.user._id;
     var reviewsArray;
-/*
-    console.log('USER IS: ', review.user);
 
-    // Get all of user's reviews
-    Review.find({ user: review.user },'_id', function(err, reviews) {
-        if(err) return next(err);
-        //res.location('/courses/' + course._id);
-        //res.send(201, null); 
-        //res.status(201);
-        //res.json(review);
-        reviewsArray = reviews;
-    });
-*/
-    // Check to see if User has posted a revievw to this course 
-    Course.findOne({_id: req.params.courseId}, 'reviews', function(err, course) {
+    // Retrieve the reviews of the course being reviewed
+    Course.findOne({_id: req.params.courseId}, 'user reviews', function(err, course) {
 
         if (err) return next(err);
 
         var errorMessages = {};
+        var alreadyReviewed = false;
 
         // Check if user has already posted a review
-        var alreadyReviewed = false;
         for (var i = 0; i < course.reviews.length; i++) {
             if (review.user.equals(course.reviews[i].user)) {
                 alreadyReviewed = true;
                 i = course.reviews.length;
             }
         } 
+
+        // Check if user is the course owner 
+        var isCourseOwner = false;
+        if (review.user.equals(course.user._id)) {
+            isCourseOwner = true;
+        }
 
         if (alreadyReviewed) {
             var errorMessages = {
@@ -64,6 +66,19 @@ router.post('/courses/:courseId/reviews', mid.authenticate, function(req, res, n
                     errors: [{ 
                         code: 400,
                         message: "You're not allowed to review a course twice!"
+                    }]
+                };
+                return res.status(400).json(errorMessages);
+        } else if (isCourseOwner) {
+            var errorMessages = {
+                message: 'Validation Failed',
+                errors: {}
+            };
+            errorMessages = {
+                    message: 'Not allowed to Review',
+                    errors: [{ 
+                        code: 400,
+                        message: "You're not allowed to review your own course!"
                     }]
                 };
                 return res.status(400).json(errorMessages);
@@ -95,8 +110,6 @@ router.post('/courses/:courseId/reviews', mid.authenticate, function(req, res, n
                     // Now save the review to the review collection
                     review.save(function(err, review) {
                         if(err) return next(err);
-                        //res.location('/courses/' + course._id);
-                        //res.send(201, null); 
                         res.status(201);
                         res.json(review);
                     });
@@ -109,31 +122,58 @@ router.post('/courses/:courseId/reviews', mid.authenticate, function(req, res, n
 /** DELETE /api/courses/:courseId/reviews/:id
  *  Deletes the specified review            */
 router.delete('/courses/:courseId/reviews/:reviewId', mid.authenticate, function(req, res, next) {
-    var id = req.params.reviewId;
-    Course.findOne({_id: req.params.courseId}, function(err, course) {
+
+    var reviewId = req.params.reviewId;
+    var userId = req.user._id;
+
+    Course.findOne({_id: req.params.courseId}, 'user reviews', function(err, course) {
         if (err) return next(err);
-
-        // Remove the review from the course's review array
-        var index = course.reviews.indexOf(id);
-        if (index > -1) {
-            course.reviews.splice(index, 1);
+        
+        // Get index of review to be deleted
+        var index = -1;
+        for (var i = 0; i < course.reviews.length; i++) {
+            if (course.reviews[i]._id.equals(reviewId)) {
+                index = i;
+            }
         }
-        // And save it
-        course.save(function(err) {
-            if (err) return next(err);
-        });
-    });  
-    // Now delete the review from review collection
-    Review.findOne({_id: id}).remove().exec(function(err) {
-        if(err) return next(err);
-        res.location('/courses');
-        res.status(204).send(null);
-        //res.status(201);
-       // res.json(review);
-    });
-    
-    /**/
 
+        // Check to see that the user is the course owner or the review owner
+        if (index !== -1) {
+            var canDelete = true;
+            if (course.reviews[index].user !== req.user._id ||
+                !course.user._id.equals(req.user._id)) {
+                    canDelete = false;
+                    var errorMessages = {
+                        message: 'Denied Access',
+                        errors: [{ 
+                            code: 400,
+                            message: 'You cannot delete this review.'
+                        }]
+                    };
+                    return res.status(400).json(errorMessages);
+            } else {
+
+                // Remove the review from the course's review array
+                if (canDelete && index > -1) {
+                    course.reviews.splice(index, 1);
+            
+                    // And save it
+                    course.save(function(err) {
+                        if (err) return next(err);
+                    });
+
+                    // Now delete the review from review collection
+                    Review.findOne({_id: id}).remove().exec(function(err) {
+                        if(err) return next(err);
+                        res.location('/courses');
+                        res.status(204).send(null);
+                    });
+                }
+            }
+        } else {
+            return res.status(400).json('Review not found.');
+        }
+    });  
 });
 
 // Unsupported http routes

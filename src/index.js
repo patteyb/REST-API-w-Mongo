@@ -1,3 +1,14 @@
+/** 
+ * INDEX.JS
+ *
+ * @author: Pattey Bleecker
+ * Date:    February 15, 2017
+ * For:     teamTreehouse Project 11, Build a RESTful API
+ * 
+ * Loads Modules, requires data models, and sets up port
+ * Sets up middleware and routes, establishes database connection,
+ * Sets up global error handling, and serves up the listening port
+ */
 'use strict';
 
 // load modules

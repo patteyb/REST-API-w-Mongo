@@ -1,3 +1,12 @@
+/** 
+ * USERS.JS
+ *
+ * @author: Pattey Bleecker
+ * Date:    February 15, 2017
+ * For:     teamTreehouse Project 11, Build a RESTful API
+ * 
+ * Router for Users
+ */
 'use strict';
 
 var express = require('express');
@@ -14,8 +23,6 @@ router.get('/users', mid.authenticate, function (req, res, next) {
     validUser.data.push(req.user);
     res.json(validUser); 
 });
-
-
 
 /** POST /api/users 201
  * Creates a user        */
@@ -39,7 +46,19 @@ router.post('/users', function(req, res, next) {
             return res.status(400).json(errorMessages);
         }
 
-        // All fields present and password fields match, go ahead and save
+        // confirm that the password is a minimum length
+        if (req.body.password.length < 8) {
+            var errorMessages = {
+                message: 'Invalid Password',
+                errors: [{ 
+                    code: 400,
+                    message: 'Password must be at least 8 characters.'
+                }]
+            };
+            return res.status(400).json(errorMessages);
+        }
+
+        // All fields present and passes password validation, go ahead and save
         var user = new User(req.body);
         user.save(function(buggered, user) {
             // Check for error

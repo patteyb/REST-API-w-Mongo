@@ -1,9 +1,18 @@
+/** 
+ * USERS.JS
+ *
+ * @author: Pattey Bleecker
+ * Date:    February 15, 2017
+ * For:     teamTreehouse Project 11, Build a RESTful API
+ * 
+ * Users model schema
+ */
 'use strict';
 
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-var validator = require('validator');
-var Review = require('../models/reviews');
+const validator = require('validator');
+const Review = require('../models/reviews');
 
 
 const Schema = mongoose.Schema;

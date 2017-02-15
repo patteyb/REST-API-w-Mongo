@@ -1,11 +1,20 @@
+/** 
+ * COURSES.JS
+ *
+ * @author: Pattey Bleecker
+ * Date:    February 15, 2017
+ * For:     teamTreehouse Project 11, Build a RESTful API
+ * 
+ * Course model schema
+ */
 'use strict';
 
-var mongoose = require('mongoose');
-var Review = require('../models/reviews');
+const mongoose = require('mongoose');
+const Review = require('../models/reviews');
 
-var Schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
-var CourseSchema = new Schema({
+const CourseSchema = new Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
@@ -42,6 +51,7 @@ var CourseSchema = new Schema({
     toJSON: { virtuals: true }
 });
 
+// Compute average of all the review ratings
 CourseSchema.virtual('overallRating').get(function() {
     var overallRating = 0;
     if (this.reviews) {
@@ -53,6 +63,7 @@ CourseSchema.virtual('overallRating').get(function() {
     return overallRating;
 });
 
+// Populate the linked fields every time Course is touched
 CourseSchema.pre('init', function(next, data) {
     Course.populate(data, {
         path: 'reviews user' 
@@ -62,12 +73,21 @@ CourseSchema.pre('init', function(next, data) {
     });
 });
 
+// Validate that there is at least one step provided before saving
 CourseSchema.path('steps').validate(function(steps) {
     if (!steps || steps.length === 0) {
         return false;
     } else {
         return true;
 }}, 'Courses need to have at least one step.');
+
+// Increment stepNumber, beginning with 1, before saving
+CourseSchema.pre('save', function(next) {
+    for (var i = 0; i < this.steps.length; i++) {
+        this.steps[i].stepNumber = i + 1;
+    }
+    next();
+});
 
 
 var Course = mongoose.model('Course', CourseSchema);

@@ -1,3 +1,12 @@
+/** 
+ * SEED.JS
+ *
+ * @author: Pattey Bleecker
+ * Date:    February 15, 2017
+ * For:     teamTreehouse Project 11, Build a RESTful API
+ * 
+ * Seeds the database with initial data
+ */
 'use strict';
 
 var seeder = require('mongoose-seeder');
