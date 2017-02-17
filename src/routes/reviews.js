@@ -35,7 +35,7 @@ router.post('/courses/:courseId/reviews', mid.authenticate, function(req, res, n
     var reviewsArray;
 
     // Retrieve the reviews of the course being reviewed
-    Course.findOne({_id: req.params.courseId}, 'user reviews', function(err, course) {
+    Course.findOne({_id: req.params.courseId}, function(err, course) {
 
         if (err) return next(err);
 
@@ -126,22 +126,29 @@ router.delete('/courses/:courseId/reviews/:reviewId', mid.authenticate, function
     var reviewId = req.params.reviewId;
     var userId = req.user._id;
 
-    Course.findOne({_id: req.params.courseId}, 'user reviews', function(err, course) {
+    Course.findOne({_id: req.params.courseId}, 'user reviews' )
+    .lean()
+    .populate({ path: 'reviews', model: 'Review', select: '_id user', populate: {path: 'user', model: 'User', select: 'fullName'}})
+    .exec(function(err, course) {
         if (err) return next(err);
-        
+             
         // Get index of review to be deleted
         var index = -1;
-        for (var i = 0; i < course.reviews.length; i++) {
-            if (course.reviews[i]._id.equals(reviewId)) {
-                index = i;
+        if (course.reviews) {
+            for (var i = 0; i < course.reviews.length; i++) {
+                if (course.reviews[i]._id.equals(reviewId)) {
+                    index = i;
+                }
             }
         }
-
+        
         // Check to see that the user is the course owner or the review owner
         if (index !== -1) {
-            var canDelete = true;
-            if (course.reviews[index].user !== req.user._id ||
-                !course.user._id.equals(req.user._id)) {
+            var canDelete = true
+
+           // Logged in user is not the course owner or review owner
+           if (!course.reviews[index].user._id.equals( req.user._id) &&
+                !course.user.equals(req.user._id)) {
                     canDelete = false;
                     var errorMessages = {
                         message: 'Denied Access',
@@ -150,31 +157,33 @@ router.delete('/courses/:courseId/reviews/:reviewId', mid.authenticate, function
                             message: 'You cannot delete this review.'
                         }]
                     };
-                    return res.status(400).json(errorMessages);
+                    return res.status(400).json(errorMessages); 
             } else {
 
                 // Remove the review from the course's review array
-                if (canDelete && index > -1) {
+                if (canDelete) {
                     course.reviews.splice(index, 1);
-            
+                    console.log(course.reviews);
+ 
+           
                     // And save it
-                    course.save(function(err) {
+                    Course.update({ _id: course._id}, course, function(err) {
                         if (err) return next(err);
                     });
 
                     // Now delete the review from review collection
-                    Review.findOne({_id: id}).remove().exec(function(err) {
+                    Review.findOne({_id: reviewId}).remove().exec(function(err) {
                         if(err) return next(err);
                         res.location('/courses');
                         res.status(204).send(null);
-                    });
-                }
-            }
+                    }); 
+                } 
+            } 
         } else {
             return res.status(400).json('Review not found.');
-        }
+        } 
     });  
-});
+}); 
 
 // Unsupported http routes
 router.put('/courses/:courseId/reviews', function (req, res, next) {

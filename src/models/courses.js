@@ -21,7 +21,7 @@ const CourseSchema = new Schema({
     },
     title: {
         type: String,
-        unique: true,
+        unique: [true, 'A course with that title already exists.'],
         required: [true, 'Title is required.']
     },
     description: {
@@ -45,10 +45,6 @@ const CourseSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Review'
     }]
-},
-{
-    toObject: { virtuals: true },
-    toJSON: { virtuals: true }
 });
 
 // Compute average of all the review ratings
@@ -61,16 +57,6 @@ CourseSchema.virtual('overallRating').get(function() {
         overallRating = Math.round(overallRating / this.reviews.length);
     }
     return overallRating;
-});
-
-// Populate the linked fields every time Course is touched
-CourseSchema.pre('init', function(next, data) {
-    Course.populate(data, {
-        path: 'reviews user' 
-    }, function(err, course) {
-        data = course;
-        next();
-    });
 });
 
 // Validate that there is at least one step provided before saving

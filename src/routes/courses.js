@@ -18,15 +18,23 @@ const mid = require('../middleware');
 
 // Anytime a courseId comes in on the request, find a course with that id
 // use in GET /courses/:id and PUT /courses/:id
+
 router.param('courseId', function(req, res, next, id) {
-    Course.findById(id, function(err, course) {
+    //console.log("IN PARAM ROUTER: ", id);
+   Course.findOne({ _id: id })
+    //.lean()
+    .populate( 'user', 'fullName' ) 
+    //.lean()
+    .populate({ path: 'reviews', model: 'Review', populate: {path: 'user', model: 'User', select: 'fullName'}})
+    .exec(function(err, course) {
         if(err) return next(err);
         if(!course) {
             err = new Error('Course not found.');
             err.status = 404;
             return next(err);
         }
-        req.course = (course);
+        //console.log('FOUND: ', course);
+        req.course = course;
         return next();
     });
 });
@@ -45,15 +53,12 @@ router.get('/courses', function(req, res, next) {
 /** GET /api/courses/:id
  * Returns one course     */
 router.get('/courses/:courseId', function(req, res, next) {
-    User.populate(req.course, [{path: 'reviews.user'}, {path: 'user'}], function(err, course) {
-        if (err) return next(err); 
         // format data for angular
         var theCourse = {};
         theCourse.data = [];
-        theCourse.data.push(req.course);
+        theCourse.data.push(req.course.toJSON({ virtuals: true }));
         res.json(theCourse);
     });
-});
 
 /** POST /api/courses
  * Creates a course        */
@@ -99,13 +104,15 @@ router.post('/courses', mid.authenticate, function(req, res, next) {
 /** PUT /api/courses/:id
  * Update a course        */
 router.put('/courses/:courseId', mid.authenticate, function(req, res, next) {
-    req.course.update(req.body, {runValidators: true}, function(buggered, course) {
+
+    Course.update({ _id: req.course._id }, req.body, {runValidators: true}, function(buggered) {
+
         if (buggered) {
-            var errorMessages = {
-                message: 'Validation Failed',
-                errors: {}
-            };
             if (buggered.name === 'ValidationError') {
+                var errorMessages = {
+                    message: 'Validation Failed',
+                    errors: {}
+                };
                 for (var error in buggered.errors) {
                     var msg = '';
                     var arr = error.split('.');
@@ -129,8 +136,8 @@ router.put('/courses/:courseId', mid.authenticate, function(req, res, next) {
                 return next(buggered);
             }
         }
-        res.location('/courses/' + course._id);
-        res.status(201);
+        res.status(204);
+        res.location('/courses/');
         res.end();
     });
 });

@@ -9,9 +9,11 @@
  * capture user name and password, and then authenticates the user in the system.
  * If user exists, return the user record; else return error.
  */
-var bcrypt = require('bcryptjs');
-var User = require('../models/users');
-var auth = require('basic-auth');
+'use strict';
+
+const bcrypt = require('bcryptjs');
+const User = require('../models/users');
+const auth = require('basic-auth');
 
 function authenticate(req, res, next) {
 

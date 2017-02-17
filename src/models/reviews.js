@@ -13,6 +13,7 @@ const User = require('../models/users');
 const Course = require('../models/courses');
 
 const mongoose = require('mongoose');
+const integerValidator = require('mongoose-integer');
 
 const Schema = mongoose.Schema;
 
@@ -27,9 +28,10 @@ const ReviewSchema = new Schema({
     },
     rating: {
         type: Number,
-        required: [true, 'Please enter a number between 1 and 5.'],
+        required: [true, 'A rating is required.'],
         min: [1, 'Rating must be a number between 1 and 5.'],
-        max: [5, 'Rating must be a number between 1 and 5.']
+        max: [5, 'Rating must be a number between 1 and 5.'],
+        integer: 'Rating must be an integer between 1 and 5.'
     },
     review: {
         type: String
@@ -42,5 +44,7 @@ ReviewSchema.pre('save', function(next) {
     next();
 });
 
-var Review = mongoose.model('Review', ReviewSchema);
+ReviewSchema.plugin(integerValidator);
+
+const Review = mongoose.model('Review', ReviewSchema);
 module.exports = Review;
