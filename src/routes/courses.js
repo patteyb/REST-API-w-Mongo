@@ -17,14 +17,11 @@ const Review = require('../models/reviews');
 const mid = require('../middleware');
 
 // Anytime a courseId comes in on the request, find a course with that id
-// use in GET /courses/:id and PUT /courses/:id
-
+// used in GET /courses/:id and PUT /courses/:id
 router.param('courseId', function(req, res, next, id) {
-    //console.log("IN PARAM ROUTER: ", id);
+
    Course.findOne({ _id: id })
-    //.lean()
     .populate( 'user', 'fullName' ) 
-    //.lean()
     .populate({ path: 'reviews', model: 'Review', populate: {path: 'user', model: 'User', select: 'fullName'}})
     .exec(function(err, course) {
         if(err) return next(err);
@@ -33,7 +30,6 @@ router.param('courseId', function(req, res, next, id) {
             err.status = 404;
             return next(err);
         }
-        //console.log('FOUND: ', course);
         req.course = course;
         return next();
     });
@@ -64,7 +60,7 @@ router.get('/courses/:courseId', function(req, res, next) {
  * Creates a course        */
 router.post('/courses', mid.authenticate, function(req, res, next) {
     var course = new Course(req.body);
-    // I use 'buggered' here because I was getting confuses between err, error and errors
+    // I use 'buggered' here because I was getting confused between err, error and errors
     course.save(function(buggered) {
         if (buggered) {
             var errorMessages = {
