@@ -86,7 +86,7 @@ router.post('/users', function(req, res, next) {
             // Saved new user with no errors
             res.status(201).send();
         });
-    // Else Fields are missing
+    // else fields are missing
     } else {
         var errorMessages = {
             message: 'No Data',
